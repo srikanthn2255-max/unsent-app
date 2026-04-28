@@ -41,8 +41,20 @@ if st.session_state.screen == "discovery":
     # Filter by Mood
     mood_filter = st.tabs(["All", "Heartbroken", "Silent Lover", "Dreamer", "Overthinker"])
     
-    # Fetch data (Only public ones)
-    res = supabase.table("messages").select("*").eq("is_private", False).order("created_at", desc=True).limit(15).execute()
+   # --- UPGRADED DATA FETCH ---
+    try:
+        # We use a 'try' block to prevent the app from crashing
+        res = supabase.table("messages").select("*").eq("is_private", False).order("created_at", desc=True).limit(15).execute()
+        messages_data = res.data
+    except Exception as e:
+        st.warning("⚠️ Database Sync Issue: We're showing a simplified feed while we fix the connection.")
+        # Fallback: Try to fetch without the 'is_private' filter in case the column name is wrong
+        try:
+            res = supabase.table("messages").select("*").limit(10).execute()
+            messages_data = res.data
+        except:
+            messages_data = []
+            st.error(f"Critical Error: {e}")
     
     for msg in res.data:
         with st.container():
